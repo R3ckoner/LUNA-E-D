@@ -94,7 +94,31 @@ struct TradeTab: View {
     
     let highlightColor: Color
     let padSizes = ["Small", "Medium", "Large"]
-
+    
+    // MARK: - Computed property to find a suitable planet or moon body
+    var planetBody: RawBodiesResponse.Body? {
+        // Debug print all bodies for troubleshooting
+        for body in systemBodies {
+            print("DEBUG: Body name: \(body.name), type: \(body.type), subType: \(body.subType ?? "nil")")
+        }
+        
+        // Find first body matching common planet/moon keywords (expanded)
+        return systemBodies.first(where: { body in
+            let type = (body.subType ?? body.type).lowercased()
+            return type.contains("planet") ||
+                   type.contains("moon") ||
+                   type.contains("terrestrial") ||
+                   type.contains("barren") ||
+                   type.contains("water") ||
+                   type.contains("ice") ||
+                   type.contains("icy") ||
+                   type.contains("frozen") ||
+                   type.contains("earth-like") ||
+                   type.contains("metallic") ||
+                   type.contains("ammonia")
+        })
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -154,30 +178,33 @@ struct TradeTab: View {
 
                             Divider()
 
-                            Text("Stations:")
+                            Text("System Planet Symbol:")
                                 .font(.headline)
-                            if info.stations.isEmpty {
-                                Text("No additional User Data found.")
-                                    .foregroundColor(.secondary)
+
+                            if let body = planetBody {
+                                Image(systemName: sfSymbolName(for: body))
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 120, height: 120)
+                                    .foregroundColor(highlightColor)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .center)
                             } else {
-                                ForEach(info.stations) { station in
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("\(station.name) (Pad size: \(padSizes[station.maxPadSize - 1]))")
-                                            .bold()
-                                        ForEach(station.commodities) { commodity in
-                                            HStack {
-                                                Text(commodity.name)
-                                                Spacer()
-                                                Text("Buy: \(commodity.sellPrice ?? 0)")
-                                                Text("Sell: \(commodity.buyPrice ?? 0)")
-                                            }
-                                            .font(.caption)
-                                        }
-                                    }
-                                    .padding(.vertical, 4)
-                                }
+                                // Fallback sparkle icon if no planet/moon found
+                                Image(systemName: "sparkles")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 120, height: 120)
+                                    .foregroundColor(.gray)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .center)
                             }
-                            
+
+                            // Debug info: show how many bodies loaded
+                            Text("Loaded bodies: \(systemBodies.count)")
+                                .foregroundColor(.secondary)
+                                .padding(.bottom)
+
                             Divider()
                             
                             Text("System Bodies:")
@@ -253,6 +280,54 @@ struct TradeTab: View {
             }
         }
     }
+    
+    // MARK: - Helper to map body type to SF Symbol
+    
+    func sfSymbolName(for body: RawBodiesResponse.Body) -> String {
+        let type = (body.subType ?? body.type).lowercased()
+        
+        if type.contains("earth-like") {
+            return "globe.europe.africa.fill"  // Earth-like planet symbol
+        }
+        
+        // For any other planet or moon, use moon symbol
+        if type.contains("planet") ||
+           type.contains("moon") ||
+           type.contains("terrestrial") ||
+           type.contains("barren") ||
+           type.contains("water") ||
+           type.contains("ice") ||
+           type.contains("icy") ||
+           type.contains("frozen") ||
+           type.contains("metallic") ||
+           type.contains("ammonia") {
+            return "moon.stars.fill"
+        }
+        
+        if type.contains("gas giant") || type.contains("jupiter") || type.contains("neptune") {
+            return "circle.hexagongrid.fill"
+        }
+        if type.contains("star") || type.contains("sun") || type.contains("yellow star") || type.contains("white dwarf") || type.contains("neutron star") || type.contains("black hole") {
+            return "sun.max.fill"
+        }
+        if type.contains("asteroid belt") || type.contains("belt") {
+            return "circle.grid.hex"
+        }
+        if type.contains("ring") {
+            return "circle.righthalf.filled"
+        }
+        if type.contains("comet") {
+            return "sparkles"
+        }
+        if type.contains("nebula") || type.contains("cloud") || type.contains("dust") {
+            return "cloud.fill"
+        }
+        if type.contains("galaxy") {
+            return "globe.americas.fill"
+        }
+        
+        return "sparkles" // generic fallback symbol
+    }
 
     // MARK: - Networking & Parsing
 
@@ -325,7 +400,10 @@ struct TradeTab: View {
             let (data, _) = try await URLSession.shared.data(from: url)
             let decoder = JSONDecoder()
             let bodiesResponse = try decoder.decode(RawBodiesResponse.self, from: data)
-            systemBodies = bodiesResponse.bodies
+            
+            await MainActor.run {
+                systemBodies = bodiesResponse.bodies
+            }
         } catch {
             print("Error loading bodies: \(error)")
         }
