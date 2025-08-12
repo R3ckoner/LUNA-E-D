@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+
 @main
 struct EliteCompanionApp: App {
     var body: some Scene {

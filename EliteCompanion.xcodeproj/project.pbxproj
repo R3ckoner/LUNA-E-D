@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9659EE922E49BD9D008655C0 /* FeedKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9659EE912E49BD9D008655C0 /* FeedKit */; };
+		9659EE942E49BD9D008655C0 /* XMLKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9659EE932E49BD9D008655C0 /* XMLKit */; };
+		9659EE962E49BDA7008655C0 /* FeedKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9659EE952E49BDA7008655C0 /* FeedKit */; };
+		9659EE982E49BDA7008655C0 /* XMLKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9659EE972E49BDA7008655C0 /* XMLKit */; };
+		96E4639C2E49BAE0005DE95D /* FeedKit in Frameworks */ = {isa = PBXBuildFile; productRef = 96E4639B2E49BAE0005DE95D /* FeedKit */; };
+		96E4639E2E49BAE0005DE95D /* XMLKit in Frameworks */ = {isa = PBXBuildFile; productRef = 96E4639D2E49BAE0005DE95D /* XMLKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		96E463782E49AD70005DE95D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +38,38 @@
 		96E463812E49AD70005DE95D /* EliteCompanionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EliteCompanionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9659EEAC2E49BEA7008655C0 /* Exceptions for "EliteCompanion" folder in "EliteCompanionTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				GalnetTab.swift,
+			);
+			target = 96E463762E49AD70005DE95D /* EliteCompanionTests */;
+		};
+		9659EEAD2E49BEA7008655C0 /* Exceptions for "EliteCompanion" folder in "EliteCompanionUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				GalnetTab.swift,
+			);
+			target = 96E463802E49AD70005DE95D /* EliteCompanionUITests */;
+		};
+		96937B912E4AD1AD009402C4 /* Exceptions for "EliteCompanion" folder in "EliteCompanion" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 96E463692E49AD6E005DE95D /* EliteCompanion */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		96E4636C2E49AD6E005DE95D /* EliteCompanion */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				96937B912E4AD1AD009402C4 /* Exceptions for "EliteCompanion" folder in "EliteCompanion" target */,
+				9659EEAC2E49BEA7008655C0 /* Exceptions for "EliteCompanion" folder in "EliteCompanionTests" target */,
+				9659EEAD2E49BEA7008655C0 /* Exceptions for "EliteCompanion" folder in "EliteCompanionUITests" target */,
+			);
 			path = EliteCompanion;
 			sourceTree = "<group>";
 		};
@@ -52,6 +90,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				96E4639C2E49BAE0005DE95D /* FeedKit in Frameworks */,
+				96E4639E2E49BAE0005DE95D /* XMLKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,6 +99,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9659EE922E49BD9D008655C0 /* FeedKit in Frameworks */,
+				9659EE942E49BD9D008655C0 /* XMLKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,18 +108,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9659EE962E49BDA7008655C0 /* FeedKit in Frameworks */,
+				9659EE982E49BDA7008655C0 /* XMLKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9659EEA92E49BE22008655C0 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		96E463612E49AD6E005DE95D = {
 			isa = PBXGroup;
 			children = (
 				96E4636C2E49AD6E005DE95D /* EliteCompanion */,
 				96E4637A2E49AD70005DE95D /* EliteCompanionTests */,
 				96E463842E49AD70005DE95D /* EliteCompanionUITests */,
+				9659EEA92E49BE22008655C0 /* Frameworks */,
 				96E4636B2E49AD6E005DE95D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -112,6 +164,8 @@
 			);
 			name = EliteCompanion;
 			packageProductDependencies = (
+				96E4639B2E49BAE0005DE95D /* FeedKit */,
+				96E4639D2E49BAE0005DE95D /* XMLKit */,
 			);
 			productName = EliteCompanion;
 			productReference = 96E4636A2E49AD6E005DE95D /* EliteCompanion.app */;
@@ -135,6 +189,8 @@
 			);
 			name = EliteCompanionTests;
 			packageProductDependencies = (
+				9659EE912E49BD9D008655C0 /* FeedKit */,
+				9659EE932E49BD9D008655C0 /* XMLKit */,
 			);
 			productName = EliteCompanionTests;
 			productReference = 96E463772E49AD70005DE95D /* EliteCompanionTests.xctest */;
@@ -158,6 +214,8 @@
 			);
 			name = EliteCompanionUITests;
 			packageProductDependencies = (
+				9659EE952E49BDA7008655C0 /* FeedKit */,
+				9659EE972E49BDA7008655C0 /* XMLKit */,
 			);
 			productName = EliteCompanionUITests;
 			productReference = 96E463812E49AD70005DE95D /* EliteCompanionUITests.xctest */;
@@ -195,6 +253,9 @@
 			);
 			mainGroup = 96E463612E49AD6E005DE95D;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				96E4639A2E49BA67005DE95D /* XCRemoteSwiftPackageReference "FeedKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 96E4636B2E49AD6E005DE95D /* Products */;
 			projectDirPath = "";
@@ -395,8 +456,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7834ZXW52P;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EliteCompanion/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -422,8 +486,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7834ZXW52P;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = EliteCompanion/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -550,6 +617,50 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		96E4639A2E49BA67005DE95D /* XCRemoteSwiftPackageReference "FeedKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nmdias/FeedKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.1.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9659EE912E49BD9D008655C0 /* FeedKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 96E4639A2E49BA67005DE95D /* XCRemoteSwiftPackageReference "FeedKit" */;
+			productName = FeedKit;
+		};
+		9659EE932E49BD9D008655C0 /* XMLKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 96E4639A2E49BA67005DE95D /* XCRemoteSwiftPackageReference "FeedKit" */;
+			productName = XMLKit;
+		};
+		9659EE952E49BDA7008655C0 /* FeedKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 96E4639A2E49BA67005DE95D /* XCRemoteSwiftPackageReference "FeedKit" */;
+			productName = FeedKit;
+		};
+		9659EE972E49BDA7008655C0 /* XMLKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 96E4639A2E49BA67005DE95D /* XCRemoteSwiftPackageReference "FeedKit" */;
+			productName = XMLKit;
+		};
+		96E4639B2E49BAE0005DE95D /* FeedKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 96E4639A2E49BA67005DE95D /* XCRemoteSwiftPackageReference "FeedKit" */;
+			productName = FeedKit;
+		};
+		96E4639D2E49BAE0005DE95D /* XMLKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 96E4639A2E49BA67005DE95D /* XCRemoteSwiftPackageReference "FeedKit" */;
+			productName = XMLKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 96E463622E49AD6E005DE95D /* Project object */;
 }
