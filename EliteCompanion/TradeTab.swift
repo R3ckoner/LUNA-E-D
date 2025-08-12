@@ -37,11 +37,54 @@ struct TradeRecommendation: Identifiable {
     let totalProfit: Int
 }
 
+struct RawBodiesResponse: Codable {
+    let id: Int
+    let name: String
+    let bodies: [Body]
+    
+    struct Body: Codable, Identifiable {
+        let id: Int
+        let name: String
+        let type: String
+        let subType: String?
+        let distanceToArrival: Double?
+        let isMainStar: Bool?
+        let isScoopable: Bool?
+        let isLandable: Bool?
+        let gravity: Double?
+        let earthMasses: Double?
+        let radius: Double?
+        let surfaceTemperature: Double?
+        let volcanismType: String?
+        let atmosphereType: String?
+        let terraformingState: String?
+        let orbitalPeriod: Double?
+        let semiMajorAxis: Double?
+        let orbitalEccentricity: Double?
+        let orbitalInclination: Double?
+        let argOfPeriapsis: Double?
+        let rotationalPeriod: Double?
+        let rotationalPeriodTidallyLocked: Bool?
+        let axialTilt: Double?
+        let rings: [Ring]?
+        
+        struct Ring: Codable, Identifiable {
+            var id: String { name }
+            let name: String
+            let type: String
+            let mass: Double
+            let innerRadius: Double
+            let outerRadius: Double
+        }
+    }
+}
+
 // MARK: - View
 
-struct TradingTab: View {
+struct TradeTab: View {
     @State private var systemName: String = ""
     @State private var systemInfo: SystemInfo? = nil
+    @State private var systemBodies: [RawBodiesResponse.Body] = []
     @State private var cargoCapacity: Int = 100
     @State private var padSize: Int = 3      // Large pad default (unused now)
     @State private var maxJumpRange: Double = 20
@@ -50,8 +93,6 @@ struct TradingTab: View {
     @State private var errorMessage: String? = nil
     
     let highlightColor: Color
-
-
     let padSizes = ["Small", "Medium", "Large"]
 
     var body: some View {
@@ -63,7 +104,6 @@ struct TradingTab: View {
                         .autocapitalization(.words)
                         .disableAutocorrection(true)
                         .padding(.horizontal)
-
 
                     Button {
                         Task {
@@ -77,7 +117,7 @@ struct TradingTab: View {
                                 .background(Color.blue)
                                 .cornerRadius(8)
                         } else {
-                            Text("Load System & Calculate Trades")
+                            Text("Load EDSM System Data")
                                 .bold()
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
@@ -100,26 +140,10 @@ struct TradingTab: View {
                             Text("System: \(info.name)")
                                 .font(.title2)
                                 .bold()
-                            HStack {
-                                Text("Economy:")
-                                Spacer()
-                                Text(info.economy ?? "Unknown")
-                            }
-                            HStack {
-                                Text("Government:")
-                                Spacer()
-                                Text(info.government ?? "Unknown")
-                            }
-                            HStack {
-                                Text("Security:")
-                                Spacer()
-                                Text(info.security ?? "Unknown")
-                            }
-                            HStack {
-                                Text("Population:")
-                                Spacer()
-                                Text(info.population.map { String($0) } ?? "Unknown")
-                            }
+                            HStack { Text("Economy:"); Spacer(); Text(info.economy ?? "Unknown") }
+                            HStack { Text("Government:"); Spacer(); Text(info.government ?? "Unknown") }
+                            HStack { Text("Security:"); Spacer(); Text(info.security ?? "Unknown") }
+                            HStack { Text("Population:"); Spacer(); Text(info.population.map { String($0) } ?? "Unknown") }
                             if let coords = info.coords {
                                 HStack {
                                     Text("Coordinates:")
@@ -148,6 +172,40 @@ struct TradingTab: View {
                                                 Text("Sell: \(commodity.buyPrice ?? 0)")
                                             }
                                             .font(.caption)
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                            }
+                            
+                            Divider()
+                            
+                            Text("System Bodies:")
+                                .font(.headline)
+                            if systemBodies.isEmpty {
+                                Text("No body data found.")
+                                    .foregroundColor(.secondary)
+                            } else {
+                                ForEach(systemBodies) { body in
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("\(body.name) – \(body.subType ?? body.type)")
+                                            .bold()
+                                        if let dist = body.distanceToArrival {
+                                            Text("Distance to arrival: \(dist, specifier: "%.0f") ls")
+                                        }
+                                        if let temp = body.surfaceTemperature {
+                                            Text("Temperature: \(temp, specifier: "%.0f") K")
+                                        }
+                                        if let grav = body.gravity {
+                                            Text("Gravity: \(grav, specifier: "%.2f") g")
+                                        }
+                                        if let rings = body.rings, !rings.isEmpty {
+                                            Text("Rings:")
+                                                .font(.subheadline)
+                                            ForEach(rings) { ring in
+                                                Text("\(ring.name) – \(ring.type)")
+                                                    .font(.caption)
+                                            }
                                         }
                                     }
                                     .padding(.vertical, 4)
@@ -202,6 +260,7 @@ struct TradingTab: View {
         isLoading = true
         errorMessage = nil
         systemInfo = nil
+        systemBodies = []
         recommendations = []
 
         let encodedName = systemName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? systemName
@@ -213,52 +272,17 @@ struct TradingTab: View {
             return
         }
 
-        print("Fetching data from URL: \(urlString)")
-
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
-
-            if let httpResp = response as? HTTPURLResponse {
-                print("HTTP Status code: \(httpResp.statusCode)")
-                guard httpResp.statusCode == 200 else {
-                    errorMessage = "Failed to load system data: HTTP \(httpResp.statusCode)"
-                    isLoading = false
-                    return
-                }
-            }
-
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("Raw JSON response:\n\(jsonString)")
+            if let httpResp = response as? HTTPURLResponse, httpResp.statusCode != 200 {
+                errorMessage = "Failed to load system data: HTTP \(httpResp.statusCode)"
+                isLoading = false
+                return
             }
 
             let decoder = JSONDecoder()
             let raw = try decoder.decode(RawSystemResponse.self, from: data)
 
-            print("Decoded system name: \(raw.name)")
-            print("Economy: \(raw.information?.economy ?? "nil")")
-            print("Government: \(raw.information?.government ?? "nil")")
-            print("Security: \(raw.information?.security ?? "nil")")
-            print("Population: \(raw.information?.population ?? -1)")
-            if let coords = raw.coords {
-                print("Coordinates: \(coords.x), \(coords.y), \(coords.z)")
-            } else {
-                print("Coordinates: nil")
-            }
-            if let stations = raw.stations {
-                print("Stations count: \(stations.count)")
-                for station in stations {
-                    print("Station: \(station.name ?? "nil"), pad size: \(station.maxLandingPadSize ?? -1)")
-                    if let commodities = station.commodities {
-                        print(" Commodities count: \(commodities.count)")
-                    } else {
-                        print(" Commodities: nil")
-                    }
-                }
-            } else {
-                print("Stations: nil")
-            }
-
-            // RELAXED: No pad size filter — take all stations
             let stations = raw.stations?.compactMap { rawStation -> Station? in
                 guard let name = rawStation.name,
                       let maxPad = rawStation.maxLandingPadSize else { return nil }
@@ -281,16 +305,30 @@ struct TradingTab: View {
                 coords: raw.coords.map { ($0.x, $0.y, $0.z) },
                 stations: stations
             )
-
-            print("Filtered stations count: \(stations.count)")
-
+            
+            await loadSystemBodies(systemName: raw.name)
             calculateTradeRecommendations()
         } catch {
-            print("Decoding or fetch error: \(error)")
             errorMessage = "Error loading system data: \(error.localizedDescription)"
         }
 
         isLoading = false
+    }
+    
+    func loadSystemBodies(systemName: String) async {
+        let encodedName = systemName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? systemName
+        let urlString = "https://www.edsm.net/api-system-v1/bodies?systemName=\(encodedName)"
+        
+        guard let url = URL(string: urlString) else { return }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decoder = JSONDecoder()
+            let bodiesResponse = try decoder.decode(RawBodiesResponse.self, from: data)
+            systemBodies = bodiesResponse.bodies
+        } catch {
+            print("Error loading bodies: \(error)")
+        }
     }
 
     // MARK: - Trade Calculations
@@ -298,14 +336,6 @@ struct TradingTab: View {
     func calculateTradeRecommendations() {
         guard let system = systemInfo else { return }
         var recs: [TradeRecommendation] = []
-
-        // DEBUG: Print all commodity prices per station
-        for station in system.stations {
-            print("Station: \(station.name), pad size: \(station.maxPadSize)")
-            for commodity in station.commodities {
-                print(" - Commodity: \(commodity.name), buyPrice: \(commodity.buyPrice ?? -1), sellPrice: \(commodity.sellPrice ?? -1)")
-            }
-        }
 
         for buyStation in system.stations {
             for sellStation in system.stations {
@@ -318,8 +348,6 @@ struct TradingTab: View {
                         guard let sellPrice = sellCommodity.buyPrice, sellPrice > 0 else { continue }
 
                         if buyCommodity.name == sellCommodity.name && sellPrice > buyPrice {
-                            print("Found profitable trade: \(buyCommodity.name) buy at \(buyPrice) (\(buyStation.name)) sell at \(sellPrice) (\(sellStation.name))")
-
                             let profitPerUnit = sellPrice - buyPrice
                             let totalProfit = profitPerUnit * cargoCapacity
 
@@ -337,7 +365,6 @@ struct TradingTab: View {
                 }
             }
         }
-
         recommendations = recs.sorted(by: { $0.totalProfit > $1.totalProfit })
     }
 }

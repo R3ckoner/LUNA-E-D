@@ -31,6 +31,93 @@ struct EDSMRanksResponse: Codable {
     let progress: [String: Int]
 }
 
+// MARK: - Position API models (from example JSON)
+struct PositionCoordinates: Codable {
+    let x: Double
+    let y: Double
+    let z: Double
+}
+
+struct PositionResponse: Codable {
+    let msgnum: Int?
+    let msg: String?
+    let system: String?
+    let systemId: Int?
+    let firstDiscover: Bool?
+    let date: String?
+    let coordinates: PositionCoordinates?
+    let url: String?
+}
+
+// MARK: - Position ViewModel
+class PositionViewModel: ObservableObject {
+    @Published var position: PositionResponse?
+    @Published var errorMessage: String?
+
+    private var task: URLSessionDataTask?
+
+    /// Fetch position from EDSM endpoint. Uses commanderName & apiKey as query params if provided.
+    func fetchPosition(commanderName: String, apiKey: String, completion: @escaping () -> Void = {}) {
+        // Build URL with query items for commanderName and apiKey
+        var components = URLComponents(string: "https://www.edsm.net/api-logs-v1/get-position")
+        var queryItems: [URLQueryItem] = []
+        if !commanderName.isEmpty {
+            queryItems.append(URLQueryItem(name: "commanderName", value: commanderName))
+        }
+        if !apiKey.isEmpty {
+            queryItems.append(URLQueryItem(name: "apiKey", value: apiKey))
+        }
+        components?.queryItems = queryItems.isEmpty ? nil : queryItems
+
+        guard let url = components?.url else {
+            DispatchQueue.main.async {
+                self.errorMessage = "Invalid URL for position request"
+                completion()
+            }
+            return
+        }
+
+        task?.cancel()
+        task = URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            defer { DispatchQueue.main.async { completion() } }
+            guard let self = self else { return }
+
+            if let error = error as NSError?, error.code == NSURLErrorCancelled {
+                // cancelled, don't set error
+                return
+            }
+
+            if let error = error {
+                DispatchQueue.main.async {
+                    self.errorMessage = error.localizedDescription
+                }
+                return
+            }
+
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    self.errorMessage = "No data received"
+                }
+                return
+            }
+
+            do {
+                let decoded = try JSONDecoder().decode(PositionResponse.self, from: data)
+                DispatchQueue.main.async {
+                    self.position = decoded
+                    self.errorMessage = nil
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Decode error: \(error.localizedDescription)"
+                }
+            }
+        }
+
+        task?.resume()
+    }
+}
+
 // MARK: - GalNet RSS feed fetcher
 class GalNetFeedFetcher: NSObject, ObservableObject, XMLParserDelegate {
     @Published var latestHeadline: String = "Loading..."
@@ -117,6 +204,7 @@ class GalNetFeedFetcher: NSObject, ObservableObject, XMLParserDelegate {
     }
 }
 
+// MARK: - CommanderTab View
 struct CommanderTab: View {
     let highlightColor: Color
 
@@ -132,6 +220,7 @@ struct CommanderTab: View {
     @State private var showVerboseRanks = true
 
     @StateObject private var galNetFetcher = GalNetFeedFetcher()
+    @StateObject private var positionVM = PositionViewModel()
 
     private let profilePicFileName = "profile_pic.png"
 
@@ -165,20 +254,20 @@ struct CommanderTab: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 40) {
                     // --- Faction Ranks Row ---
-                    HStack(spacing: 24) {
+                    HStack(spacing: 40) {
                         ForEach(["Alliance", "Federation", "Empire"], id: \.self) { faction in
                             VStack {
                                 Image(faction)
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 80, height: 80)
-                                    .padding(25)
+                                    .padding(10)
                                     .background(highlightColor)
                                     .cornerRadius(12)
                                     .shadow(color: highlightColor.opacity(0.4), radius: 6, x: 0, y: 4)
-                                
+
                                 Text(commander.ranksVerbose[faction] ?? "N/A")
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
@@ -194,8 +283,6 @@ struct CommanderTab: View {
                                         .font(.caption2)
                                         .foregroundColor(highlightColor.opacity(0.5))
                                 }
-
-
                             }
                             .frame(width: 80)
                         }
@@ -334,6 +421,68 @@ struct CommanderTab: View {
                         }
                     }
 
+                    // New: Position section (second box under commander info)
+                    infoSection(title: "Position") {
+                        if let pos = positionVM.position {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Text("System")
+                                    Spacer()
+                                    Text(pos.system ?? "Unknown")
+                                        .fontWeight(.semibold)
+                                }
+
+                                if let systemId = pos.systemId {
+                                    HStack {
+                                        Text("System ID")
+                                        Spacer()
+                                        Text("\(systemId)")
+                                    }
+                                }
+
+                                if let date = pos.date {
+                                    HStack {
+                                        Text("Date")
+                                        Spacer()
+                                        Text(date)
+                                    }
+                                }
+
+                                HStack {
+                                    Text("First Discover")
+                                    Spacer()
+                                    Text((pos.firstDiscover ?? false) ? "Yes" : "No")
+                                }
+
+                                if let coords = pos.coordinates {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Coordinates:")
+                                            .fontWeight(.semibold)
+                                        Text("x: \(String(format: "%.2f", coords.x))")
+                                        Text("y: \(String(format: "%.2f", coords.y))")
+                                        Text("z: \(String(format: "%.2f", coords.z))")
+                                    }
+                                }
+
+                                if let urlString = pos.url, let url = URL(string: urlString) {
+                                    Link("View profile on EDSM", destination: url)
+                                        .font(.footnote)
+                                        .padding(.top, 6)
+                                }
+                            }
+                            .font(.subheadline)
+                        } else if let error = positionVM.errorMessage {
+                            Text("Error loading position: \(error)")
+                                .foregroundColor(.red)
+                        } else if isLoading {
+                            Text("Loading position data...")
+                                .foregroundColor(.gray)
+                        } else {
+                            Text("No position data loaded")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
                     // Ranks section with toggle button (numeric / verbose)
                     infoSection(title: "Ranks") {
                         Button(action: { showVerboseRanks.toggle() }) {
@@ -458,6 +607,12 @@ struct CommanderTab: View {
 
         group.enter()
         loadCommanderRanks(commanderName: trimmedName, apiKey: trimmedKey) {
+            group.leave()
+        }
+
+        // Fetch position as part of the group so the UI knows when loading is done
+        group.enter()
+        positionVM.fetchPosition(commanderName: trimmedName, apiKey: trimmedKey) {
             group.leave()
         }
 

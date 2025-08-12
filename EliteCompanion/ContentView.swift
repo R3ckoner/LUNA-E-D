@@ -38,7 +38,7 @@ struct ContentView: View {
                     Text("CMDR")
                 }
             
-            TradingTab(highlightColor: highlightColor)
+            TradeTab(highlightColor: highlightColor)
                 .tabItem {
                     Image(systemName: "globe.americas.fill")
                     Text("System")
